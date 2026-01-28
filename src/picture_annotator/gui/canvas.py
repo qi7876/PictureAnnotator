@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from PySide6.QtCore import QEvent, QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QGraphicsItem,
@@ -53,6 +54,10 @@ class CornerHandle(QGraphicsRectItem):
         self.owner.setSelected(True)
         super().mousePressEvent(event)
 
+    def mouseReleaseEvent(self, event) -> None:  # noqa: ANN001
+        super().mouseReleaseEvent(event)
+        self.owner.notify_edited()
+
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:  # noqa: ANN401
         if self._updating:
             return super().itemChange(change, value)
@@ -81,6 +86,7 @@ class BBoxItem(QGraphicsRectItem):
         det: dict[str, Any],
         image_width: int,
         image_height: int,
+        on_edited: Callable[[dict[str, Any]], None] | None = None,
         line_width: int = 2,
     ) -> None:
         super().__init__()
@@ -88,6 +94,7 @@ class BBoxItem(QGraphicsRectItem):
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.min_size = 1.0
+        self._on_edited = on_edited
 
         self._pen_normal = QPen(GREEN)
         self._pen_normal.setCosmetic(True)
@@ -146,6 +153,10 @@ class BBoxItem(QGraphicsRectItem):
         self.setRect(rect)
         self.det["bbox"] = [rect.left(), rect.top(), rect.right(), rect.bottom()]
 
+    def notify_edited(self) -> None:
+        if self._on_edited is not None:
+            self._on_edited(self.det)
+
 
 class ImageCanvas(QGraphicsView):
     boxSelectionChanged = Signal(object)  # det dict | None
@@ -199,15 +210,17 @@ class ImageCanvas(QGraphicsView):
         self._det_to_item.clear()
 
         for det in detections:
-            item = BBoxItem(det=det, image_width=self._image_width, image_height=self._image_height)
+            item = BBoxItem(
+                det=det,
+                image_width=self._image_width,
+                image_height=self._image_height,
+                on_edited=self.boxEdited.emit,
+            )
             self._scene.addItem(item)
             self._scene.addItem(item.tl)
             self._scene.addItem(item.br)
             self._items.append(item)
             self._det_to_item[id(det)] = item
-
-            item.tl.installSceneEventFilter(self)
-            item.br.installSceneEventFilter(self)
 
     def select_detection(self, det: dict[str, Any] | None) -> None:
         self._scene.blockSignals(True)
@@ -222,13 +235,6 @@ class ImageCanvas(QGraphicsView):
         finally:
             self._scene.blockSignals(False)
         self._on_scene_selection_changed()
-
-    def sceneEventFilter(self, watched: QGraphicsItem, event) -> bool:  # noqa: ANN001
-        if event.type() == QEvent.Type.GraphicsSceneMouseRelease:
-            owner = getattr(watched, "owner", None)
-            if isinstance(owner, BBoxItem):
-                self.boxEdited.emit(owner.det)
-        return super().sceneEventFilter(watched, event)
 
     def _on_scene_selection_changed(self) -> None:
         selected_items = [it for it in self._scene.selectedItems() if isinstance(it, BBoxItem)]

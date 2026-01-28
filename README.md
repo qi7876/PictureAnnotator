@@ -37,15 +37,27 @@ PictureAnnotator/
 uv sync
 ```
 
-2. 把图片放到 `data/dataset/`（默认配置读取这里）
+2. 初始化目录结构（会创建 `data/dataset/`、`data/weights/`、`data/output/`、`data/visual_output/` 等）：
 
-3. 运行检测（默认读 `config/config.toml`）：
+```bash
+uv run python scripts/init_project.py
+```
+
+如需按其它配置初始化目录结构：
+
+```bash
+uv run python scripts/init_project.py --config config/exp1.toml
+```
+
+3. 把图片放到 `data/dataset/`（默认配置读取这里）
+
+4. 运行检测（默认读 `config/config.toml`）：
 
 ```bash
 uv run python scripts/run_detection.py
 ```
 
-4. 查看输出：
+5. 查看输出：
 
 - 结果 JSON：`data/output/`
 - 可视化图：`data/visual_output/`

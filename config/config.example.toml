@@ -1,0 +1,34 @@
+[input]
+dir = "data/dataset"
+recursive = false
+extensions = [".png", ".jpg", ".jpeg"]
+
+[output]
+dir = "data/output"
+overwrite = true
+write_empty = true
+
+[visualization]
+enabled = true
+dir = "data/visual_output"
+box_color = [0, 255, 0]
+line_width = 2
+write_label = true
+
+[model]
+weights = "data/weights/yolov8x.pt"
+device = "cpu"
+confidence_threshold = 0.1
+iou_threshold = 0.5
+imgsz = 1280
+max_det = 300
+
+[sahi]
+enabled = true
+slice_height = 640
+slice_width = 640
+overlap_height_ratio = 0.2
+overlap_width_ratio = 0.2
+postprocess_type = "NMS"
+postprocess_match_metric = "IOU"
+postprocess_match_threshold = 0.5

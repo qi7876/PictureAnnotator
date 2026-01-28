@@ -36,7 +36,8 @@ class BoxListModel(QAbstractListModel):
 
     def set_detections(self, detections: list[dict[str, Any]]) -> None:
         self.beginResetModel()
-        self._detections = detections
+        # Copy the list so external mutations (e.g. store/session) don't desync the view/model.
+        self._detections = list(detections)
         self.endResetModel()
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
@@ -75,4 +76,3 @@ class BoxListModel(QAbstractListModel):
         self.beginRemoveRows(QModelIndex(), row, row)
         self._detections.pop(row)
         self.endRemoveRows()
-

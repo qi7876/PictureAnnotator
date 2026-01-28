@@ -175,7 +175,7 @@ class ImageCanvas(QGraphicsView):
         self._pixmap_item.setZValue(0)
 
         self._items: list[BBoxItem] = []
-        self._det_to_item: dict[int, BBoxItem] = {}  # key: id(det)
+        self._det_to_item: dict[int, BBoxItem] = {}  # key: det["id"]
 
         self._image_width = 0
         self._image_height = 0
@@ -210,6 +210,9 @@ class ImageCanvas(QGraphicsView):
         self._det_to_item.clear()
 
         for det in detections:
+            det_id = det.get("id")
+            if not isinstance(det_id, int):
+                continue
             item = BBoxItem(
                 det=det,
                 image_width=self._image_width,
@@ -220,7 +223,7 @@ class ImageCanvas(QGraphicsView):
             self._scene.addItem(item.tl)
             self._scene.addItem(item.br)
             self._items.append(item)
-            self._det_to_item[id(det)] = item
+            self._det_to_item[det_id] = item
 
     def select_detection(self, det: dict[str, Any] | None) -> None:
         self._scene.blockSignals(True)
@@ -228,7 +231,10 @@ class ImageCanvas(QGraphicsView):
             self._scene.clearSelection()
             if det is None:
                 return
-            item = self._det_to_item.get(id(det))
+            det_id = det.get("id")
+            if not isinstance(det_id, int):
+                return
+            item = self._det_to_item.get(det_id)
             if item is not None:
                 item.setSelected(True)
                 self.centerOn(item)

@@ -200,3 +200,31 @@ uv run python scripts/summarize_results.py
 uv run pytest
 uv run ruff check .
 ```
+
+## GUI 标注编辑器（PySide6）
+
+用于人工调整检测输出的 per-image JSON（会 **覆盖写回** `output.dir`）。
+
+详细使用说明见：`docs/GUI.md`。
+
+运行：
+
+```bash
+uv run python scripts/run_gui.py
+```
+
+常用操作：
+
+- 左侧选择图片；切换图片/关闭软件时自动保存
+- 右侧列表选中框后按 `Delete` 删除
+- 点击工具栏“新增框(A)”后在画面拖拽创建新框（`score=1.0`，`id=max(id)+1`）
+- 选中框为荧光橙，未选中为荧光绿；仅选中时显示角点手柄（拖左上/右下调整）
+- `Ctrl + 滚轮` 缩放；拖动画面平移；工具栏“适配窗口”一键适配
+
+打包（Windows，PyInstaller 目录模式）：
+
+```bash
+pyinstaller --noconsole --onedir scripts/run_gui.py -n PictureAnnotatorGUI
+```
+
+将 `dist/PictureAnnotatorGUI/` 作为“软件根目录”，并确保同目录下存在 `config/config.toml` 以及 `data/`。

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QItemSelectionModel, Qt
-from PySide6.QtGui import QAction, QKeySequence, QPixmap
+from PySide6.QtGui import QAction, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -142,6 +142,9 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(f"图片数量：{len(self._images)}")
 
+        # Letter shortcuts are attached to non-text widgets so they don't interfere with typing in the search box.
+        self._install_letter_shortcuts()
+
     def _bind_signals(self) -> None:
         self.act_prev.triggered.connect(self._prev_image)
         self.act_next.triggered.connect(self._next_image)
@@ -160,6 +163,19 @@ class MainWindow(QMainWindow):
         self.view_boxes.selectionModel().currentChanged.connect(self._on_box_selected_in_list)
 
         self.txt_search.textChanged.connect(self._apply_image_filter)
+
+    def _install_letter_shortcuts(self) -> None:
+        self.canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        def add_shortcut(widget, key: Qt.Key, handler) -> None:  # noqa: ANN001
+            sc = QShortcut(QKeySequence(key), widget)
+            sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            sc.activated.connect(handler)
+
+        for w in (self.canvas, self.view_images, self.view_boxes):
+            add_shortcut(w, Qt.Key.Key_Q, self._prev_image)
+            add_shortcut(w, Qt.Key.Key_E, self._next_image)
+            add_shortcut(w, Qt.Key.Key_D, self._delete_selected_box)
 
     def _update_title(self) -> None:
         dirty = bool(self._current and self._current.dirty)
@@ -213,6 +229,7 @@ class MainWindow(QMainWindow):
         self.canvas.set_image(pixmap)
         self._boxes_model.set_detections(session.detections)
         self.canvas.set_boxes(session.detections)
+        self.canvas.setFocus()
 
         if report.json_parse_failed:
             QMessageBox.warning(self, "提示", "标注 JSON 解析失败，已重置为空标注（保存时覆盖写回）。")
@@ -344,4 +361,3 @@ def run() -> None:
     win = MainWindow()
     win.show()
     sys.exit(app.exec())
-

@@ -69,10 +69,10 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar("工具栏")
         self.addToolBar(toolbar)
 
-        self.act_prev = QAction("上一张", self)
+        self.act_prev = QAction("上一张(Q)", self)
         toolbar.addAction(self.act_prev)
 
-        self.act_next = QAction("下一张", self)
+        self.act_next = QAction("下一张(E)", self)
         toolbar.addAction(self.act_next)
 
         toolbar.addSeparator()
@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         self.act_add.setShortcut(QKeySequence(Qt.Key.Key_A))
         toolbar.addAction(self.act_add)
 
-        self.act_delete = QAction("删除框(Del)", self)
+        self.act_delete = QAction("删除框(D)", self)
         toolbar.addAction(self.act_delete)
 
         toolbar.addSeparator()

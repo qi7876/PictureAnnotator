@@ -14,7 +14,8 @@ from PySide6.QtWidgets import (
 )
 
 GREEN = QColor(0, 255, 0)
-ORANGE = QColor(255, 140, 0)
+# A stronger orange for better visibility on bright images.
+ORANGE = QColor(255, 120, 0)
 
 
 def _clamp(value: float, low: float, high: float) -> float:
@@ -102,7 +103,7 @@ class BBoxItem(QGraphicsRectItem):
 
         self._pen_selected = QPen(ORANGE)
         self._pen_selected.setCosmetic(True)
-        self._pen_selected.setWidth(int(line_width))
+        self._pen_selected.setWidth(int(line_width) + 2)
 
         self.setPen(self._pen_normal)
         self.setBrush(Qt.BrushStyle.NoBrush)
@@ -265,6 +266,7 @@ class ImageCanvas(QGraphicsView):
                 self._rubber_item = QGraphicsRectItem()
                 pen = QPen(ORANGE)
                 pen.setCosmetic(True)
+                pen.setWidth(4)
                 pen.setStyle(Qt.PenStyle.DashLine)
                 self._rubber_item.setPen(pen)
                 self._rubber_item.setBrush(Qt.BrushStyle.NoBrush)

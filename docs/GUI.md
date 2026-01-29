@@ -55,7 +55,7 @@ pyinstaller --noconsole --onedir scripts/run_gui.py -n PictureAnnotatorGUI
 ### 4.1 切换图片
 
 - 直接在左侧图片列表点击
-- 工具栏“上一张/下一张”（`Q/E` 或 `PageUp/PageDown`）
+- 工具栏“上一张/下一张”（`Q/E`）
 
 切换图片时会自动保存当前图片的标注（包括统一 clamp）。
 
@@ -101,7 +101,7 @@ pyinstaller --noconsole --onedir scripts/run_gui.py -n PictureAnnotatorGUI
 ### 4.5 删除框
 
 - 在右侧框列表选中一个框
-- 点击“删除选中框”或按 `D` / `Delete`
+- 点击“删除选中框”或按 `D`
 
 删除规则：
 

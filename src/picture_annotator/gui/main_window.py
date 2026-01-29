@@ -70,11 +70,9 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         self.act_prev = QAction("上一张", self)
-        self.act_prev.setShortcut(QKeySequence(Qt.Key.Key_PageUp))
         toolbar.addAction(self.act_prev)
 
         self.act_next = QAction("下一张", self)
-        self.act_next.setShortcut(QKeySequence(Qt.Key.Key_PageDown))
         toolbar.addAction(self.act_next)
 
         toolbar.addSeparator()
@@ -89,7 +87,6 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.act_add)
 
         self.act_delete = QAction("删除框(Del)", self)
-        self.act_delete.setShortcut(QKeySequence(Qt.Key.Key_Delete))
         toolbar.addAction(self.act_delete)
 
         toolbar.addSeparator()

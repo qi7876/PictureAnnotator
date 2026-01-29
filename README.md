@@ -206,6 +206,7 @@ uv run ruff check .
 用于人工调整检测输出的 per-image JSON（会 **覆盖写回** `output.dir`）。
 
 详细使用说明见：`docs/GUI.md`。
+外包用法说明见：`docs/OUTSOURCE_BBOX_GUIDE.md`。
 
 运行：
 

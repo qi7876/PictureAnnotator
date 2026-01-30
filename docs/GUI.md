@@ -92,6 +92,10 @@ pyinstaller --noconsole --onedir scripts/run_gui.py -n PictureAnnotatorGUI
 1. 点击工具栏“新增框(A)”进入新增模式（再次点击或按 `A` 退出）
 2. 在主画面按住左键拖拽，松开鼠标生成一个新框
 
+新增模式提示：
+
+- 鼠标位置会显示水平/垂直两条辅助线，便于对齐与定位
+
 新增框写入规则：
 
 - `score = 1.0`

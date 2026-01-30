@@ -4,10 +4,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
+from PySide6.QtCore import QLineF, QPointF, QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QCursor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QGraphicsItem,
+    QGraphicsLineItem,
     QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsView,
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import (
 GREEN = QColor(0, 255, 0)
 # A stronger orange for better visibility on bright images.
 ORANGE = QColor(255, 120, 0)
+ORANGE_CROSSHAIR = QColor(255, 120, 0, 200)
 
 
 def _clamp(value: float, low: float, high: float) -> float:
@@ -175,6 +177,10 @@ class ImageCanvas(QGraphicsView):
         self._pixmap_item = self._scene.addPixmap(QPixmap())
         self._pixmap_item.setZValue(0)
 
+        self._crosshair_h = QGraphicsLineItem()
+        self._crosshair_v = QGraphicsLineItem()
+        self._init_crosshair()
+
         self._items: list[BBoxItem] = []
         self._det_to_item: dict[int, BBoxItem] = {}  # key: det["id"]
 
@@ -187,13 +193,53 @@ class ImageCanvas(QGraphicsView):
 
         self._scene.selectionChanged.connect(self._on_scene_selection_changed)
 
+    def _init_crosshair(self) -> None:
+        pen = QPen(ORANGE_CROSSHAIR)
+        pen.setCosmetic(True)
+        pen.setWidth(2)
+        pen.setStyle(Qt.PenStyle.DashLine)
+
+        for item in (self._crosshair_h, self._crosshair_v):
+            item.setPen(pen)
+            item.setZValue(18)
+            item.setVisible(False)
+            item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            self._scene.addItem(item)
+
+    def _update_crosshair(self, scene_pos: QPointF | None) -> None:
+        if not self._add_mode:
+            self._crosshair_h.setVisible(False)
+            self._crosshair_v.setVisible(False)
+            return
+
+        rect = self._scene.sceneRect()
+        if rect.isNull() or rect.width() <= 0 or rect.height() <= 0 or scene_pos is None:
+            self._crosshair_h.setVisible(False)
+            self._crosshair_v.setVisible(False)
+            return
+
+        if not rect.contains(scene_pos):
+            self._crosshair_h.setVisible(False)
+            self._crosshair_v.setVisible(False)
+            return
+
+        x = scene_pos.x()
+        y = scene_pos.y()
+
+        self._crosshair_v.setLine(QLineF(x, rect.top(), x, rect.bottom()))
+        self._crosshair_h.setLine(QLineF(rect.left(), y, rect.right(), y))
+        self._crosshair_h.setVisible(True)
+        self._crosshair_v.setVisible(True)
+
     def set_add_mode(self, enabled: bool) -> None:
         self._add_mode = bool(enabled)
         if self._add_mode:
             self.setCursor(Qt.CursorShape.CrossCursor)
             self._scene.clearSelection()
+            self._update_crosshair(self.mapToScene(self.mapFromGlobal(QCursor.pos())))
         else:
             self.unsetCursor()
+            self._update_crosshair(None)
 
     def set_image(self, pixmap: QPixmap) -> None:
         self._pixmap_item.setPixmap(pixmap)
@@ -201,6 +247,7 @@ class ImageCanvas(QGraphicsView):
         self._image_width = int(pixmap.width())
         self._image_height = int(pixmap.height())
         self.fitInView(self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self._update_crosshair(None)
 
     def set_boxes(self, detections: list[dict[str, Any]]) -> None:
         for it in self._items:
@@ -262,6 +309,7 @@ class ImageCanvas(QGraphicsView):
     def mousePressEvent(self, event) -> None:  # noqa: ANN001
         if self._add_mode and event.button() == Qt.MouseButton.LeftButton:
             self._rubber_start = self.mapToScene(event.pos())
+            self._update_crosshair(self._rubber_start)
             if self._rubber_item is None:
                 self._rubber_item = QGraphicsRectItem()
                 pen = QPen(ORANGE)
@@ -278,6 +326,8 @@ class ImageCanvas(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:  # noqa: ANN001
+        if self._add_mode:
+            self._update_crosshair(self.mapToScene(event.pos()))
         if self._add_mode and self._rubber_start is not None and self._rubber_item is not None:
             cur = self.mapToScene(event.pos())
             rect = QRectF(self._rubber_start, cur).normalized()
@@ -289,6 +339,7 @@ class ImageCanvas(QGraphicsView):
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: ANN001
         if self._add_mode and event.button() == Qt.MouseButton.LeftButton:
+            self._update_crosshair(self.mapToScene(event.pos()))
             if self._rubber_item is not None:
                 rect = self._rubber_item.rect()
                 self._scene.removeItem(self._rubber_item)
@@ -300,6 +351,11 @@ class ImageCanvas(QGraphicsView):
             event.accept()
             return
         super().mouseReleaseEvent(event)
+
+    def leaveEvent(self, event) -> None:  # noqa: ANN001
+        if self._add_mode:
+            self._update_crosshair(None)
+        super().leaveEvent(event)
 
     def _clamp_rect(self, rect: QRectF) -> QRectF:
         w = float(self._image_width)

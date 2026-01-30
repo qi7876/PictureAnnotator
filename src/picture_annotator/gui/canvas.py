@@ -233,8 +233,10 @@ class ImageCanvas(QGraphicsView):
 
     def set_add_mode(self, enabled: bool) -> None:
         self._add_mode = bool(enabled)
+        self.setMouseTracking(self._add_mode)
+        self.viewport().setMouseTracking(self._add_mode)
         if self._add_mode:
-            self.setCursor(Qt.CursorShape.CrossCursor)
+            self.setCursor(Qt.CursorShape.BlankCursor)
             self._scene.clearSelection()
             self._update_crosshair(self.mapToScene(self.mapFromGlobal(QCursor.pos())))
         else:

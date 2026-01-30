@@ -94,7 +94,7 @@ pyinstaller --noconsole --onedir scripts/run_gui.py -n PictureAnnotatorGUI
 
 新增模式提示：
 
-- 鼠标位置会显示水平/垂直两条辅助线，便于对齐与定位
+- 鼠标指针会隐藏，并显示水平/垂直两条辅助线，便于对齐与定位
 
 新增框写入规则：
 

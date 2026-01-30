@@ -169,7 +169,8 @@ class ImageCanvas(QGraphicsView):
     def __init__(self) -> None:
         super().__init__()
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self._drag_mode_default = QGraphicsView.DragMode.ScrollHandDrag
+        self.setDragMode(self._drag_mode_default)
 
         self._scene = QGraphicsScene(self)
         self.setScene(self._scene)
@@ -236,11 +237,16 @@ class ImageCanvas(QGraphicsView):
         self.setMouseTracking(self._add_mode)
         self.viewport().setMouseTracking(self._add_mode)
         if self._add_mode:
+            # QGraphicsView renders into its viewport; set cursor on both to reliably hide it.
+            self.setDragMode(QGraphicsView.DragMode.NoDrag)
             self.setCursor(Qt.CursorShape.BlankCursor)
+            self.viewport().setCursor(Qt.CursorShape.BlankCursor)
             self._scene.clearSelection()
             self._update_crosshair(self.mapToScene(self.mapFromGlobal(QCursor.pos())))
         else:
+            self.setDragMode(self._drag_mode_default)
             self.unsetCursor()
+            self.viewport().unsetCursor()
             self._update_crosshair(None)
 
     def set_image(self, pixmap: QPixmap) -> None:
